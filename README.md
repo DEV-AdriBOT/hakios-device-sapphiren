@@ -1,6 +1,17 @@
-# Device: Qualcomm Technologies, Inc. Khaje IDP sapphiren (sapphiren)
+# Device: Redmi Note 13 4G NFC (sapphiren) — Snapdragon 685 ("khaje", SM6225)
 
-Made by `tools/new-device.py` on 2026-11-06, from the file device-tree.dtb. Edit it as the port goes.
+**State (6 November 2026): the kernel boots to user space and ends by itself; nothing more.** What was seen on the phone:
+
+- U-Boot (this repository's `u-boot/`, started by ABL with `fastboot boot`) shows its console, reads the power and volume-down keys and
+  brings up USB as a device through the Synopsys Femto PHY. The boot image must be **header version 4** with `text_offset` 0 in the
+  Image header; the loader's container rides behind U-Boot in the kernel blob (ABL hands over no boot ramdisk), 4 MiB in.
+- The loader runs with `platform khaje` (the panel's framebuffer at `0x5c000000`, 1080 x 2400).
+- XNU boots on core 0 and runs the `hello` RAM disk ("Hello from user space on Darwin!"), then returns to the loader.
+  The SoC is **ARMv8.0** (Kryo 265 and Cortex-A73): build the kernel with `HAKIOS_ARMV8_0=1` (no PAN).
+- Not working: a kernel started on another core by PSCI, UFS, touch, GPU (Adreno 610), Wi-Fi, audio, cellular, and the iOS
+  user space (no system image yet). See `device.conf` for each part.
+
+The bootloader must be unlocked. Nothing here writes to the phone; every run is `fastboot boot`.
 
 | What | Value |
 |---|---|
