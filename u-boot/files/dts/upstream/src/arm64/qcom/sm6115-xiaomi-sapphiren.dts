@@ -1,0 +1,99 @@
+// SPDX-License-Identifier: BSD-3-Clause
+/*
+ * The Redmi Note 13 4G NFC (sapphiren, Snapdragon 685 "khaje", SM6225) for HakiOS's U-Boot.
+ *
+ * Only what U-Boot needs: the panel's framebuffer as the bootloader left it, the keys, USB as a device (fastboot) and UFS.
+ * The SoC is a member of the SM6115 ("bengal") family: sm6115.dtsi's memory map equals the phone's own Android device tree
+ * (checked against /sys/firmware/fdt of the phone: hyp 0x45700000, smem 0x46000000, modem 0x4ab00000, adsp 0x53800000,
+ * splash 0x5c000000, removed 0x60000000). RAM is 0x40000000.. : ABL writes its size into the tree it hands over.
+ */
+
+/dts-v1/;
+
+#include <dt-bindings/arm/qcom,ids.h>
+#include <dt-bindings/gpio/gpio.h>
+#include <dt-bindings/input/linux-event-codes.h>
+#include "sm6115.dtsi"
+#include "pm6125.dtsi"
+
+/ {
+	model = "Xiaomi Redmi Note 13 4G NFC";
+	compatible = "xiaomi,sapphiren", "qcom,sm6115";
+	chassis-type = "handset";
+
+	/* what ABL matches against: the phone's own tree has qcom,msm-id = <0x24a 0x10000 0x206 0x10000>, board-id 0x30022 */
+	qcom,msm-id = <0x24a 0x10000>, <0x206 0x10000>;
+	qcom,board-id = <0x30022 0>;
+
+	chosen {
+		#address-cells = <2>;
+		#size-cells = <2>;
+		ranges;
+
+		/* the panel as ABL left it: 1080 x 2400, 32 bits, in the phone's splash_region@5c000000 */
+		framebuffer0: framebuffer@5c000000 {
+			compatible = "simple-framebuffer";
+			reg = <0x0 0x5c000000 0x0 (1080 * 2400 * 4)>;
+			width = <1080>;
+			height = <2400>;
+			stride = <(1080 * 4)>;
+			format = "a8r8g8b8";
+		};
+	};
+
+	reserved-memory {
+		/* the phone's ramoops */
+		ramoops@5d000000 {
+			compatible = "ramoops";
+			reg = <0x0 0x5d000000 0x0 0x200000>;
+			record-size = <0x40000>;
+			pmsg-size = <0x100000>;
+			console-size = <0x80000>;
+		};
+
+		/* where the HakiOS loader takes its payload from (64 MiB); mapped, nothing else in U-Boot may take it */
+		hakios_payload_mem: hakios-payload@f0000000 {
+			reg = <0x0 0xf0000000 0x0 0x4000000>;
+		};
+	};
+};
+
+&pon_pwrkey {
+	status = "okay";
+};
+
+&pon_resin {
+	linux,code = <KEY_VOLUMEDOWN>;
+	status = "okay";
+};
+
+&ufs_mem_hc {
+	status = "okay";
+};
+
+&ufs_mem_phy {
+	status = "okay";
+};
+
+/* USB 2.0 as a device: U-Boot's fastboot */
+&usb {
+	status = "okay";
+};
+
+&usb_dwc3 {
+	dr_mode = "peripheral";
+	maximum-speed = "high-speed";
+	phys = <&usb_hsphy>;
+	phy-names = "usb2-phy";
+	/delete-property/ usb-role-switch;
+};
+
+/*
+ * This SoC's USB 2.0 PHY is a Synopsys Femto, not sm6115.dtsi's QUSB2: the phone's own Android tree has
+ * hsphy@1613000 "qcom,usb-hsphy-snps-femto" (seen on the phone: with the QUSB2 driver U-Boot printed
+ * "QUSB2PHY pll lock failed: status reg = 0"). U-Boot's Femto v2 driver drives the same register map.
+ */
+&usb_hsphy {
+	compatible = "qcom,usb-snps-femto-v2-phy";
+	status = "okay";
+};

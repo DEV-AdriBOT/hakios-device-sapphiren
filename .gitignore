@@ -1,0 +1,4 @@
+# the phone's own device tree (adb pull /sys/firmware/fdt): never committed
+prebuilt/device-tree.dtb
+*.img
+fw-*/

@@ -1,0 +1,4 @@
+# HakiOS defconfig for the Redmi Note 13 4G NFC (sapphiren): the common kernel, the khaje family's facts, and this device's own.
+#include common_defconfig
+#include khaje.config
+#include sapphiren.config
