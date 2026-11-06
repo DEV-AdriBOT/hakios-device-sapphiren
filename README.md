@@ -1,6 +1,22 @@
-# Device: Qualcomm Technologies, Inc. Khaje IDP sapphiren (sapphiren)
+# Device: Redmi Note 13 4G NFC (sapphiren) — Snapdragon 685 ("khaje", SM6225)
 
-Made by `tools/new-device.py` on 2026-11-06, from the file device-tree.dtb. Edit it as the port goes.
+**State (6 November 2026): iOS 16.5's user space runs on the phone, from RAM, on one core.** What was seen on the phone:
+
+- U-Boot (this repository's `u-boot/`, started by ABL with `fastboot boot`) shows its console, reads the power and volume-down keys and
+  brings up USB as a device through the Synopsys Femto PHY. The boot image must be **header version 4** with `text_offset` 0 in the
+  Image header; the loader's container rides behind U-Boot in the kernel blob (ABL hands over no boot ramdisk), 4 MiB in.
+- The loader runs with `platform khaje` (the panel's framebuffer at `0x5c000000`, 1080 x 2400) and the system image (2.3 GB, from your
+  own IPSW) is sent into RAM over USB at every start.
+- XNU runs on core 0 (the SoC is **ARMv8.0**: build the kernel with `HAKIOS_ARMV8_0=1`, no PAN; the GIC needs group 1 enabled with
+  bits 0, 1 and 4 of `GICD_CTLR`, and the virtual timer is INTID 19: `soc_vtimer=0x13`). launchd, backboardd and SpringBoard come up and
+  the home screen is drawn on the panel by the CPU, at about 9 frames a second.
+- The touch controller is a FocalTech FTS at I2C address 0x38 (the device tree also lists a Synaptics and a Novatek); the driver
+  (`synaptics_tcm=1`, `drivers/input/hakios.synaptics.c` of the common repository) reads it by hand on GPIO 6 and 7. No finger has been seen yet.
+- The battery level is the one Android had at the start (`battery_level=N`): no gauge driver.
+- Not working: a kernel started on another core by PSCI, UFS, GPU (Adreno 610), Wi-Fi, audio, cellular, and keeping anything on the phone
+  (there is no storage: every start sends the system over USB). See `device.conf` for each part.
+
+The bootloader must be unlocked. Nothing here writes to the phone; every run is `fastboot boot`.
 
 | What | Value |
 |---|---|
