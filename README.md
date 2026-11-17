@@ -10,7 +10,7 @@ This is an experimental HakiOS port for the Xiaomi Redmi Note 13 4G NFC. The boo
 
 The port boots **Darwin 22.5.0 (XNU 8796.121.2) with iOS 16.5 user space** and reaches `launchd`, `backboardd` and **SpringBoard/the home screen**. The Darwin root and cryptexes can be read from the phone's `darwin` UFS partition, so the complete system does not need to be uploaded from the host on every boot.
 
-The current state is deliberately conservative: hardware marked as experimental or untested below should not be considered production-ready.
+The current state is deliberately conservative: hardware marked as experimental or untested below should not be considered production-ready. See [PROGRESS.md](PROGRESS.md) for the latest verified WLAN tests, blockers and safe resumption steps.
 
 | Component | State | Notes |
 |---|---|---|
@@ -21,10 +21,10 @@ The current state is deliberately conservative: hardware marked as experimental 
 | GPU / graphics | **Partly** | Experimental Adreno 610 path and Mesa OpenGL ES rendering work. Rendering performance and full graphics integration are still poor. Metal is not complete. |
 | UFS / storage | **Partly** | Read-only native UFS access and the `darwin` partition work experimentally. The U-Boot UFS command still hangs. |
 | USB | **Partly** | U-Boot fastboot and the loader's USB device mode work; kernel USB is not complete. |
-| Wi-Fi | **No** | The Khaje legacy-WLAN/MPSS path is being ported and has not been validated yet. |
+| Wi-Fi | **Not functional** | MPSS announces WLFW (`0x45`); early QMI replies succeed, but MSA handoff is blocked and no WLAN connection has been demonstrated. |
 | Bluetooth | **No** | Not implemented. |
 | Audio | **No** | Not implemented. |
-| Cellular | **No** | Modem bring-up is still pending. |
+| Cellular | **No data service** | MPSS/QRTR bring-up works experimentally; QMI-IPA/GSI and cellular data are not functional. |
 | Battery gauge | **Partly** | A battery level can be passed from Android; there is no native gauge driver yet. |
 | Camera, haptics, thermal | **No** | Not implemented. |
 
@@ -49,13 +49,9 @@ The device-specific loader and boot image work is in the common HakiOS kernel/UE
 
 ## Wi-Fi work in progress
 
-The phone does not use the WCN6750/WPSS arrangement from the reference device. Its WLAN is part of the Khaje legacy WLAN path in the modem/MPSS firmware. The current work includes:
+The phone does not use the WCN6750/WPSS arrangement from the reference device. Its WCN3990 legacy WLAN firmware runs in a modem protection domain. In RAM-only tests, Khaje MPSS/GLINK/QRTR stay up, the host supplies the phone's `wlanmdsp.mbn`, and the modem announces **WLFW (`0x45`, instance 0)**. The first three WLFW requests succeed and the firmware describes its 1 MiB MSA reservation. TrustZone currently rejects the first MSA ownership change (`-2`, answer `0x56`), so `MSA_READY` and the board-data exchange have **not** been completed. This does **not** mean Wi-Fi is usable.
 
-- Khaje MPSS address and PAS configuration.
-- APCS, SMEM, SMP2P and GLINK bring-up experiments.
-- Local, uncommitted firmware extraction for testing only.
-
-The MPSS/WLAN path has not yet been validated end-to-end, so no Wi-Fi support is claimed here.
+The common kernel changes and diagnostic firmware are still local, not part of this device repository. See [PROGRESS.md](PROGRESS.md) for exact observations and next steps. Graphics work remains a separate priority after the WLAN path advances.
 
 ## Graphics work in progress
 
@@ -71,4 +67,4 @@ Vendor firmware and Apple system images used for local testing are not part of t
 
 ## Recovery
 
-The port is experimental. Keep fastboot available and do not touch the vendor boot chain partitions. If a test hangs, return to fastboot with the hardware key combination and restore the active slot as needed.
+The port is experimental. Keep fastboot available and do not touch the vendor boot chain partitions. Before another kernel test, return to fastboot with **Power + Volume Down**, then verify the product is `sapphiren` and the active slot is `b`. Do not run a second kernel in the same `xnuloader` session; use temporary `fastboot boot` tests only, never flash partitions.
