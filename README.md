@@ -8,13 +8,13 @@
 
 This is an experimental HakiOS port for the Xiaomi Redmi Note 13 4G NFC. The bootloader must be unlocked.
 
-The port boots **Darwin 16.5** and reaches `launchd`, `backboardd` and **SpringBoard/the home screen**. The Darwin root and cryptexes can be read from the phone's `darwin` UFS partition, so the complete system does not need to be uploaded from the host on every boot.
+The port boots **Darwin 22.5.0 (XNU 8796.121.2) with iOS 16.5 user space** and reaches `launchd`, `backboardd` and **SpringBoard/the home screen**. The Darwin root and cryptexes can be read from the phone's `darwin` UFS partition, so the complete system does not need to be uploaded from the host on every boot.
 
 The current state is deliberately conservative: hardware marked as experimental or untested below should not be considered production-ready.
 
 | Component | State | Notes |
 |---|---|---|
-| Darwin | **Home screen** | Darwin 16.5 reaches SpringBoard. |
+| Darwin / iOS | **Home screen** | Darwin 22.5.0 with iOS 16.5 user space reaches SpringBoard. |
 | Display | **Works** | The panel is usable; the framebuffer path still needs performance work. |
 | CPU/SMP | **Works** | All eight cores can run under the Khaje-specific XNU setup. |
 | Touch | **Partly** | FocalTech FTS at I2C `0x38` works in tests, but cold-boot firmware loading and swipe reliability still need work. |
